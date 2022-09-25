@@ -94,7 +94,7 @@ foo@bar:~$ monk run monk-kong/stack
 ```
 
 ## Create admin service route for konga
-````
+```
 curl --location --request POST 'http://13.49.125.144:8001/services/<service_id>/routes' \                                                                  
 --header 'Content-Type: application/json' \
 --data-raw '{
