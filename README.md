@@ -29,7 +29,7 @@ monk load MANIFEST
 
 #### Let's take a look at the themes I have installed.
 ```bash
-foo@bar:~$ monk list monk-kong/stack
+foo@bar:~$ monk list monk-kong
 ✔ Got the list
 Type      Template          Repository  Version  Tags
 runnable  monk-kong/db      local       -        -

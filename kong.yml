@@ -1,0 +1,103 @@
+namespace: monk-kong
+
+kong-common:
+  metadata:
+    defines: metadata
+    name: MinIO | High Performance, Kubernetes Native Object Storage
+    description: High Performance Object Storage is Open Source, Amazon S3 compatible, Kubernetes Native and is designed for cloud native workloads like AI.
+    tags: High Performance Object Storage, Multi-Cloud, Hybrid Cloud, Object Storage, Object Storage for AI, Cloud Storage, S3 Compatible, Golang, AWS S3, Amazon S3, Open Source Cloud Storage, Ceph, OpenStack Swift, Microsoft Azure Blobstore, Google Cloud Storage, Cloud Foundry Blobstore, Cloud Foundry Bosh, Artifact Storage, DC/OS, Kubernetes, Docker, Container Storage, Blobstore, NAS, Gluster, GlusterFS, PACS, VNA, Archive, Secondary Storage, Backup Storage, Snapshots Hybrid, OnPrem, Private Cloud
+    website: https://min.io/
+    publisher: monk.io
+    icon: https://min.io/resources/img/logo.svg 
+  variables:
+    monk_kong_database:
+      env: KONG_DATABASE
+      value: postgres
+    monk_kong_database_name:
+      env: KONG_PG_DATABASE
+      value: <- `${kong_database_name}`
+    monk_kong_database_host:
+      env: KONG_PG_HOST
+      value: <- get-hostname("monk-kong/db", "postgres") split(".dns.podman") join("")
+    monk_kong_database_user:
+      env: KONG_PG_USER
+      value: <- `${kong_database_user}`
+    monk_kong_database_port:
+      env: KONG_PG_PORT
+      value: <- `${kong_database_port}`
+    monk_kong_database_password:
+      env: KONG_PG_PASSWORD
+      value: <- `${kong_database_password}`
+
+
+kong:
+  defines: runnable
+  inherits: ./kong-common
+  depends:
+    wait-for:
+      runnables:
+        - monk-kong/db
+      timeout: 30
+  containers:
+
+    kong-migrations-up:
+      image: kong
+      image-tag: latest
+      bash: kong migrations bootstrap && kong migrations finish
+    
+    monk-kong-app:
+      image: kong
+      image-tag: latest
+      environment:
+        - <- `KONG_ADMIN_ACCESS_LOG=/dev/stdout`
+        - <- `KONG_PROXY_ACCESS_LOG=/dev/stdout`
+        - <- `KONG_ADMIN_ERROR_LOG=/dev/stderr`
+        - <- `KONG_PROXY_ERROR_LOG=/dev/stderr`
+        - <- `KONG_PROXY_LISTEN=0.0.0.0:${kong_proxy_listen}`
+        - <- `KONG_ADMIN_LISTEN=0.0.0.0:${kong_admin_listen}`
+        # - <- `KONG_PREFIX=/var/run/kong`
+        - <- `KONG_DECLARATIVE_CONFIG="/opt/kong/kong.yaml"`
+      ports:
+        - <- `0.0.0.0:${kong_proxy_listen}:${kong_proxy_listen}`
+        - <- `0.0.0.0:${kong_admin_listen}:${kong_admin_listen}`
+    monk-konga:
+      image: pantsel/konga
+      image-tag: latest
+      ports:
+        - <- `0.0.0.0:${konga_admin_listen}:1337`
+
+
+db: 
+  defines: runnable
+  variables:
+    defines: variables
+    image-tag:
+      type: string
+      value: latest
+    db-password:
+      env: POSTGRES_PASSWORD
+      value: <- `${kong_database_password}`
+      type: string
+    db-user:
+      env: POSTGRES_USER
+      value: <- `${kong_database_user}`
+      type: string
+    db-name:
+      env: POSTGRES_DB
+      value: <- `${kong_database_name}`
+      type: string
+    db-port:
+      value: <- `${kong_database_port}`
+      type: int
+    db-trust:
+      env: POSTGRES_HOST_AUTH_METHOD
+      value: trust
+  containers:
+    defines: containers
+    postgres:
+      image-tag: <- `${image-tag}`
+      paths:
+      - <- `${moncc-volume-path}/db_data:/var/lib/postgresql/data`
+      image: postgres
+      ports:
+      - <- `0.0.0.0:${db-port}:5432`
