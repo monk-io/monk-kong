@@ -81,6 +81,26 @@ foo@bar:~$ monk run monk-kong/stack
 	monk do        monk-kong/stack/action_name - Run defined action (if exists)
 💡 Check monk help for more!
 ```
+ 
+ ## Create admin service for konga
+ ```
+ curl --location --request POST 'http://13.49.125.144:8001/services/' \                                                                                                             
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "admin-api",
+    "host": "13.49.125.144",
+    "port": 8001
+}'
+```
+
+## Create admin service route for konga
+````
+curl --location --request POST 'http://13.49.125.144:8001/services/<service_id>/routes' \                                                                  
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "paths": ["/admin-api"]
+}'
+```
 
 
 ## Variables
