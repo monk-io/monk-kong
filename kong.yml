@@ -9,6 +9,10 @@ kong-common:
     website: https://min.io/
     publisher: monk.io
     icon: https://min.io/resources/img/logo.svg 
+  connections:
+    db:
+      runnable: monk-kong/db
+      service: db-svc
   variables:
     monk_kong_database:
       env: KONG_DATABASE
@@ -18,7 +22,7 @@ kong-common:
       value: <- `${kong_database_name}`
     monk_kong_database_host:
       env: KONG_PG_HOST
-      value: <- get-hostname("monk-kong/db", "postgres") split(".dns.podman") join("")
+      value: <- connection-hostname("db") split(".dns.podman") join("")
     monk_kong_database_user:
       env: KONG_PG_USER
       value: <- `${kong_database_user}`
@@ -38,6 +42,7 @@ kong:
       runnables:
         - monk-kong/db
       timeout: 30
+
   containers:
 
     kong-migrations-up:
@@ -65,6 +70,16 @@ kong:
       image-tag: latest
       ports:
         - <- `0.0.0.0:${konga_admin_listen}:1337`
+  services:
+    monk-kong-app:
+      container: monk-kong-app
+      port: <- `${kong_proxy_listen}`
+      protocol: tcp
+    monk-konga:
+      container: monk-konga
+      port: <- `${konga_admin_listen}`
+      protocol: tcp
+      host-port: <- `${konga_admin_listen}`
 
 
 db: 
@@ -99,5 +114,8 @@ db:
       paths:
       - <- `${moncc-volume-path}/db_data:/var/lib/postgresql/data`
       image: postgres
-      ports:
-      - <- `0.0.0.0:${db-port}:5432`
+  services:
+    monk-kong-db:
+      container: postgres
+      port: 5432
+      protocol: tcp
