@@ -1,4 +1,4 @@
-namespace: monk-kong
+namespace: kong
 
 kong-common:
   metadata:
@@ -11,7 +11,7 @@ kong-common:
     icon: https://min.io/resources/img/logo.svg 
   connections:
     db:
-      runnable: monk-kong/db
+      runnable: kong/db
       service: db-svc
   variables:
     monk_kong_database:
@@ -40,7 +40,7 @@ kong:
   depends:
     wait-for:
       runnables:
-        - monk-kong/db
+        - kong/db
       timeout: 30
 
   containers:
@@ -50,7 +50,7 @@ kong:
       image-tag: latest
       bash: kong migrations bootstrap && kong migrations finish
     
-    monk-kong-app:
+    kong-app:
       image: kong
       image-tag: latest
       environment:
@@ -65,18 +65,18 @@ kong:
       ports:
         - <- `0.0.0.0:${kong_proxy_listen}:${kong_proxy_listen}`
         - <- `0.0.0.0:${kong_admin_listen}:${kong_admin_listen}`
-    monk-konga:
+    konga:
       image: pantsel/konga
       image-tag: latest
       ports:
         - <- `0.0.0.0:${konga_admin_listen}:1337`
   services:
-    monk-kong-app:
-      container: monk-kong-app
+    kong-app:
+      container: kong-app
       port: <- `${kong_proxy_listen}`
       protocol: tcp
-    monk-konga:
-      container: monk-konga
+    konga:
+      container: konga
       port: <- `${konga_admin_listen}`
       protocol: tcp
       host-port: <- `${konga_admin_listen}`
@@ -115,7 +115,7 @@ db:
       - <- `${moncc-volume-path}/db_data:/var/lib/postgresql/data`
       image: postgres
   services:
-    monk-kong-db:
+    kong-db:
       container: postgres
       port: 5432
       protocol: tcp
