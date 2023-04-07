@@ -1,7 +1,26 @@
+---
 namespace: kong
 
 stack:
   defines: process-group
+  metadata:
+    name: Kong
+    description: |
+      Kong is an open-source API gateway and microservices management layer. It is designed to help developers manage, secure, and scale their APIs and microservices. Kong is built on top of the Nginx web server and provides a plugin architecture that allows developers to extend its functionality.
+
+      Kong provides a range of features, including:
+      1. API Gateway: Kong acts as a gateway between clients and microservices, providing a single entry point for all API requests.
+      2. Load Balancing: Kong can distribute traffic across multiple instances of a microservice, ensuring high availability and scalability.
+      3. Authentication and Authorization: Kong provides a range of authentication and authorization plugins, including OAuth2, JWT, and Basic Authentication.
+      4. Rate Limiting: Kong can limit the number of requests that clients can make to a microservice, preventing overloading and ensuring fair usage.
+      5. Logging and Monitoring: Kong provides detailed logging and monitoring capabilities, allowing developers to track API usage and performance.
+
+      Kong is a popular open-source project with a large and active community of developers. It is used by many organizations to manage their APIs and microservices, including Airbnb, The New York Times, and Zillow.
+
+    tags: Networking, Cross-platform, Lua scripting, API Gateway, Microservices, Load Balancing, Containerization, Cloud-native, DevOps, Security,Analytics, Monitoring, Scalability, Performance, RESTful APIs, GraphQL, Service Mesh
+    website: https://konghq.com/
+    publisher: monk.io
+    icon: https://konghq.com/wp-content/themes/konghq/assets/img/gradient-logo.svg
   runnable-list:
     - kong/db
     - kong/kong
