@@ -68,16 +68,10 @@ kong:
         - <- `KONG_PROXY_ERROR_LOG=/dev/stderr`
         - <- `KONG_PROXY_LISTEN=0.0.0.0:${kong_proxy_listen}`
         - <- `KONG_ADMIN_LISTEN=0.0.0.0:${kong_admin_listen}`
-        # - <- `KONG_PREFIX=/var/run/kong`
         - <- `KONG_DECLARATIVE_CONFIG="/opt/kong/kong.yaml"`
-      ports:
-        - <- `0.0.0.0:${kong_proxy_listen}:${kong_proxy_listen}`
-        - <- `0.0.0.0:${kong_admin_listen}:${kong_admin_listen}`
     konga:
       image: pantsel/konga
       image-tag: latest
-      ports:
-        - <- `0.0.0.0:${konga_admin_listen}:1337`
   services:
     kong-app:
       container: kong-app
@@ -91,6 +85,7 @@ kong:
 
 db:
   defines: runnable
+  private: true
   variables:
     image-tag:
       type: string
