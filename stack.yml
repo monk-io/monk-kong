@@ -24,25 +24,4 @@ stack:
   runnable-list:
     - kong/db
     - kong/kong
-  variables:
-    kong_database_name:
-      type: string
-      value: kong
-    kong_database_password:
-      type: string
-      value: kong
-    kong_database_user:
-      type: string
-      value: kong
-    kong_database_port:
-      type: int
-      value: 5432
-    kong_proxy_listen:
-      type: int
-      value: 8000
-    kong_admin_listen:
-      type: int
-      value: 8001
-    konga_admin_listen:
-      type: int
-      value: 1337
+

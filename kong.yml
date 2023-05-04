@@ -31,19 +31,19 @@ kong-common:
       value: postgres
     monk_kong_database_name:
       env: KONG_PG_DATABASE
-      value: <- `${kong_database_name}`
+      value: kong
     monk_kong_database_host:
       env: KONG_PG_HOST
       value: <- connection-hostname("db") split(".dns.podman") join("")
     monk_kong_database_user:
       env: KONG_PG_USER
-      value: <- `${kong_database_user}`
+      value: kong
     monk_kong_database_port:
       env: KONG_PG_PORT
-      value: <- `${kong_database_port}`
+      value:  5432
     monk_kong_database_password:
       env: KONG_PG_PASSWORD
-      value: <- `${kong_database_password}`
+      value: kong
 
 kong:
   defines: runnable
@@ -66,8 +66,8 @@ kong:
         - <- `KONG_PROXY_ACCESS_LOG=/dev/stdout`
         - <- `KONG_ADMIN_ERROR_LOG=/dev/stderr`
         - <- `KONG_PROXY_ERROR_LOG=/dev/stderr`
-        - <- `KONG_PROXY_LISTEN=0.0.0.0:${kong_proxy_listen}`
-        - <- `KONG_ADMIN_LISTEN=0.0.0.0:${kong_admin_listen}`
+        - <- `KONG_PROXY_LISTEN=0.0.0.0:8000`
+        - <- `KONG_ADMIN_LISTEN=0.0.0.0:1337`
         - <- `KONG_DECLARATIVE_CONFIG="/opt/kong/kong.yaml"`
     konga:
       image: pantsel/konga
@@ -75,13 +75,13 @@ kong:
   services:
     kong-app:
       container: kong-app
-      port: <- `${kong_proxy_listen}`
+      port: 8000
       protocol: tcp
     konga:
       container: konga
-      port: <- `${konga_admin_listen}`
+      port: 1337
       protocol: tcp
-      host-port: <- `${konga_admin_listen}`
+      host-port: 1337
 
 db:
   defines: runnable
@@ -92,18 +92,18 @@ db:
       value: latest
     db-password:
       env: POSTGRES_PASSWORD
-      value: <- `${kong_database_password}`
+      value: kong
       type: string
     db-user:
       env: POSTGRES_USER
-      value: <- `${kong_database_user}`
+      value: konk
       type: string
     db-name:
       env: POSTGRES_DB
-      value: <- `${kong_database_name}`
+      value: kong
       type: string
     db-port:
-      value: <- `${kong_database_port}`
+      value: 5432
       type: int
     db-trust:
       env: POSTGRES_HOST_AUTH_METHOD
