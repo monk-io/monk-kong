@@ -16,7 +16,7 @@ kong-common:
 
       Kong is a popular open-source project with a large and active community of developers. It is used by many organizations to manage their APIs and microservices, including Airbnb, The New York Times, and Zillow.
 
-    tags: Networking, Cross-platform, Lua scripting, API Gateway, Microservices, Load Balancing, Containerization, Cloud-native, DevOps, Security,Analytics, Monitoring, Scalability, Performance, RESTful APIs, GraphQL, Service Mesh
+    tags: networking, containerization, load balancing, microservices, api gateway, cross-platform, security, scalability, graphql, restful apis, monitoring, service mesh, performance, devops, analytics
     website: https://konghq.com/
     publisher: monk.io
     icon: https://konghq.com/wp-content/themes/konghq/assets/img/gradient-logo.svg
