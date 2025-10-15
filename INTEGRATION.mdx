@@ -1,0 +1,191 @@
+---
+title: Kong
+description: Ready-to-run Kong container stack you can run directly or inherit to integrate an API gateway into your microservices infrastructure.
+primary_category: api
+tags: [kong, api-gateway, microservices, template, runnable, stack, proxy, load-balancing]
+integration_type: template
+hosting_models: [self-hosted]
+website_url: https://konghq.com/
+docs_url: https://docs.konghq.com/
+publisher: monk.io
+---
+
+## Overview
+
+This template provides a production‑ready Kong stack as a Monk runnable. You can:
+
+- Run it directly to get a managed Kong API gateway with PostgreSQL backend
+- Inherit it in your own runnable to seamlessly add API management to your microservices
+
+It exposes Kong proxy on port 8000, admin GUI (Konga) on port 1337, handles database migrations automatically, and connects to a PostgreSQL backend for configuration storage.
+
+## What this template manages
+
+- Kong Gateway container (`kong` image, configurable tag)
+- Konga Admin GUI (web interface for managing Kong)
+- PostgreSQL database (configuration and state storage)
+- Automatic database migrations on startup
+- Network services for proxy (8000) and admin (1337)
+- Persistent volumes for database storage
+
+## Quick start (run directly)
+
+1) Load templates
+
+```bash
+monk load MANIFEST
+```
+
+2) Run Kong stack with defaults
+
+```bash
+monk run kong/stack
+```
+
+3) Customize credentials (recommended via inheritance)
+
+Running directly uses the defaults defined in this template's `variables`. Secrets added with `monk secrets add` will not affect this runnable unless you inherit it and reference those secrets.
+
+- Preferred: inherit and replace variables with `secret("...")` as shown below.
+- Alternative: fork/clone and edit the `variables` in `kong/kong.yml`, then `monk load MANIFEST` and run.
+
+Once started, access:
+- Kong Proxy: `http://localhost:8000`
+- Konga Admin GUI: `http://localhost:1337`
+
+## Configuration
+
+Key variables you can customize in this template:
+
+**Kong Gateway (`kong/kong-common`):**
+```yaml
+variables:
+  monk_kong_database: "postgres"           # database type (env: KONG_DATABASE)
+  monk_kong_database_name: "kong"          # PostgreSQL database name (env: KONG_PG_DATABASE)
+  monk_kong_database_user: "kong"          # PostgreSQL user (env: KONG_PG_USER)
+  monk_kong_database_password: "kong"      # PostgreSQL password (env: KONG_PG_PASSWORD)
+  monk_kong_database_port: 5432            # PostgreSQL port (env: KONG_PG_PORT)
+  monk_kong_database_host: <- connection-hostname("db")  # auto-resolved from connection
+```
+
+**PostgreSQL Database (`kong/db`):**
+```yaml
+variables:
+  image-tag: "latest"                      # postgres image tag
+  db-password: "kong"                      # POSTGRES_PASSWORD
+  db-user: "kong"                          # POSTGRES_USER
+  db-name: "kong"                          # POSTGRES_DB
+  db-port: 5432                            # PostgreSQL port
+```
+
+Database data is persisted under `${monk-volume-path}/kong/db_data` on the host.
+
+## Use by inheritance (recommended for apps)
+
+Inherit the Kong stack in your application and connect your services through the API gateway. Example:
+
+```yaml
+namespace: myapp
+
+gateway:
+  defines: runnable
+  inherits: kong/kong
+  variables:
+    monk_kong_database_password:
+      value: <- secret("kong-db-password")
+
+db:
+  defines: runnable
+  inherits: kong/db
+  variables:
+    db-password:
+      value: <- secret("kong-db-password")
+    db-user:
+      value: kong
+    db-name:
+      value: kong
+
+api:
+  defines: runnable
+  containers:
+    api:
+      image: myorg/api
+      environment:
+        - API_PORT=3000
+  services:
+    api:
+      container: api
+      port: 3000
+      protocol: tcp
+
+stack:
+  defines: process-group
+  runnable-list:
+    - myapp/db
+    - myapp/gateway
+    - myapp/api
+```
+
+Then set the secrets and run your stack:
+
+```bash
+monk secrets add -g kong-db-password="STRONG_DB_PASSWORD"
+monk run myapp/stack
+```
+
+After startup, configure Kong routes via Konga (http://localhost:1337) or the Admin API to proxy requests from port 8000 to your backend services.
+
+## Ports and connectivity
+
+**Services exposed by `kong/kong`:**
+- `kong-app`: TCP port `8000` - Kong proxy (main API gateway entry point)
+- `konga`: TCP port `1337` - Konga admin GUI (host-port mapped)
+
+**Services exposed by `kong/db`:**
+- `kong-db`: TCP port `5432` - PostgreSQL database
+
+From other runnables in the same process group, use `connection-hostname("<connection-name>")` to resolve service hosts. Kong automatically connects to the database via the `db` connection.
+
+## Persistence and configuration
+
+- Database data path: `${monk-volume-path}/kong/db_data:/var/lib/postgresql/data`
+- Kong runs migrations automatically on startup via the `kong-migrations-up` container
+- Configure Kong declaratively via `/opt/kong/kong.yaml` (mounted in `kong-app` container)
+- For dynamic configuration, use the Admin API or Konga GUI after startup
+
+## Features
+
+- **API Gateway**: Single entry point for routing requests to microservices
+- **Load Balancing**: Distribute traffic across multiple service instances
+- **Authentication & Authorization**: OAuth2, JWT, Basic Auth, API keys, and more
+- **Rate Limiting**: Protect services from overload with request quotas
+- **Service Discovery**: Dynamic upstream service registration
+- **Plugin Ecosystem**: 50+ official plugins (logging, monitoring, transformations)
+- **Admin GUI**: Konga web interface for visual management
+- **Declarative Configuration**: Define routes and services as code
+
+## Related templates
+
+- Combine with monitoring tools (`prometheus-grafana/`) for observability and metrics
+- Integrate with service meshes for advanced traffic management
+- See other templates in this repository for complementary services
+
+## Troubleshooting
+
+- If database migrations fail, check that PostgreSQL is fully started and accessible. The `kong/kong` runnable waits up to 30 seconds for `kong/db` via the `depends.wait-for` clause.
+- Ensure database credentials match between Kong and PostgreSQL configurations.
+- If ports 8000 or 1337 are already in use, modify the service port mappings in your inherited runnable.
+- Check logs:
+
+```bash
+monk logs -l 500 -f kong/stack
+```
+
+- Verify PostgreSQL is ready:
+
+```bash
+monk shell kong/db
+# Inside container:
+pg_isready
+```
+
