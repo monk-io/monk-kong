@@ -140,3 +140,7 @@ db:
         exec("postgres", "pg_isready") "accepting connections" contains?
       period: 15
       initialDelay: 15
+    liveness:
+      code: |
+        exec("postgres", "pg_isready") "accepting connections" contains?
+      period: 60
